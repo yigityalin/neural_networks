@@ -979,7 +979,36 @@ def main_part_b(X_train, y_train, X_valid, y_valid, X_test, y_test):
             np.save(f, preds)
 
 
+def main_part_c(X_train, y_train, X_valid, y_valid, X_test, y_test):
+    part_c_logs_dir = RNN_LOGS_DIR / 'gru'
+
+    alphas = [0.01, 0.05, 0.1]
+    momentums = [0.85, 0.95]
+    n_neurons_list = [[128, 128, 64, 6],
+                      [128, 64, 32, 6],
+                      [64, 64, 32, 6],
+                      [32, 32, 6]]
+
+    for alpha, momentum, n_neurons in product(alphas, momentums, n_neurons_list):
+        model = LSTM(recurrent_units=128, n_neurons=n_neurons)
+        history = model.fit(X_train, y_train, X_valid, y_valid, alpha=alpha, momentum=momentum, tolerance=5)
+
+        preds = model(X_test)
+
+        history_filepath = part_c_logs_dir / f'model-part-c-{"_".join([str(i) for i in model.n_neurons])}' \
+                                             f'alpha_{alpha}-momentum={momentum}-history'
+        predictions_filepath = part_c_logs_dir / f'model-part-c-{"_".join([str(i) for i in model.n_neurons])}' \
+                                                 f'alpha_{alpha}-momentum={momentum}-test_predictions'
+
+        with open(history_filepath, 'w') as f:
+            json.dump(history, f)
+
+        with open(predictions_filepath, 'wb') as f:
+            np.save(f, preds)
+
+
 if __name__ == '__main__':
     X_train, y_train, X_valid, y_valid, X_test, y_test = load_and_preprocess_data()
     # main_part_a(X_train, y_train, X_valid, y_valid, X_test, y_test)
     main_part_b(X_train, y_train, X_valid, y_valid, X_test, y_test)
+    main_part_c(X_train, y_train, X_valid, y_valid, X_test, y_test)
