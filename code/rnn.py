@@ -8,7 +8,10 @@ import json
 
 from tqdm import tqdm
 import h5py
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
 
 
 # IMPORTANT: Please change this according to your own local paths to run the code
@@ -18,8 +21,11 @@ LOGS_DIR = PROJECT_ROOT_DIR / 'logs'  # The directory that contains the logs
 RNN_DATA_PATH = DATA_DIR / 'data3.h5'  # The filepath to the dataset for q1
 RNN_LOGS_DIR = LOGS_DIR / 'rnn'  # The directory to which the logs will be saved for q1
 
+LOGS_DIR.mkdir(exist_ok=True)
+RNN_LOGS_DIR.mkdir(exist_ok=True)
 
-def load_and_preprocess_data(filepath=RNN_DATA_PATH):
+
+def load_and_preprocess_data_q3(filepath=RNN_DATA_PATH):
     with h5py.File(filepath) as file:
         X_train = np.asarray(file.get('trX'), dtype=np.float64)
         y_train = np.asarray(file.get('trY'), dtype=np.int32)
@@ -919,42 +925,46 @@ class GRU:
         ]
 
 
-def main_part_a(X_train, y_train, X_valid, y_valid, X_test, y_test):
+def q3_main_part_a(X_train, y_train, X_valid, y_valid, X_test, y_test):
     part_a_logs_dir = RNN_LOGS_DIR / 'simple'
+    part_a_logs_dir.mkdir(exist_ok=True)
 
-    alphas = [0.001, 0.005, 0.01, 0.1]
+    alphas = [0.01, 0.04, 0.08, 0.12]
     momentums = [0.85, 0.95]
     n_neurons_list = [[128, 128, 64, 6],
                       [128, 64, 32, 6],
                       [64, 64, 32, 6],
-                      [64, 32, 32, 6],
-                      [128, 64, 6],
-                      [64, 32, 6],
-                      [64, 16, 6],
                       [32, 32, 6]]
 
     for alpha, momentum, n_neurons in product(alphas, momentums, n_neurons_list):
         model = SimpleRNN(recurrent_units=128, n_neurons=n_neurons)
         history = model.fit(X_train, y_train, X_valid, y_valid, alpha=alpha, momentum=momentum)
 
-        preds = model(X_test)
+        train_preds = model(X_train)
+        test_preds = model(X_test)
 
         history_filepath = part_a_logs_dir / f'model-part-a-{"_".join([str(i) for i in model.n_neurons])}' \
                                              f'alpha_{alpha}-momentum={momentum}-history'
-        predictions_filepath = part_a_logs_dir / f'model-part-a-{"_".join([str(i) for i in model.n_neurons])}' \
-                                                 f'alpha_{alpha}-momentum={momentum}-test_predictions'
+        train_predictions_filepath = part_a_logs_dir / f'model-part-a-{"_".join([str(i) for i in model.n_neurons])}' \
+                                                       f'alpha_{alpha}-momentum={momentum}-train_predictions'
+        test_predictions_filepath = part_a_logs_dir / f'model-part-a-{"_".join([str(i) for i in model.n_neurons])}' \
+                                                      f'alpha_{alpha}-momentum={momentum}-test_predictions'
 
         with open(history_filepath, 'w') as f:
             json.dump(history, f)
 
-        with open(predictions_filepath, 'wb') as f:
-            np.save(f, preds)
+        with open(train_predictions_filepath, 'wb') as f:
+            np.save(f, train_preds)
+
+        with open(test_predictions_filepath, 'wb') as f:
+            np.save(f, test_preds)
 
 
-def main_part_b(X_train, y_train, X_valid, y_valid, X_test, y_test):
+def q3_main_part_b(X_train, y_train, X_valid, y_valid, X_test, y_test):
     part_b_logs_dir = RNN_LOGS_DIR / 'lstm'
+    part_b_logs_dir.mkdir(exist_ok=True)
 
-    alphas = [0.01, 0.05, 0.1]
+    alphas = [0.01, 0.04, 0.08, 0.12]
     momentums = [0.85, 0.95]
     n_neurons_list = [[128, 128, 64, 6],
                       [128, 64, 32, 6],
@@ -965,24 +975,31 @@ def main_part_b(X_train, y_train, X_valid, y_valid, X_test, y_test):
         model = LSTM(recurrent_units=128, n_neurons=n_neurons)
         history = model.fit(X_train, y_train, X_valid, y_valid, alpha=alpha, momentum=momentum)
 
-        preds = model(X_test)
+        train_preds = model(X_train)
+        test_preds = model(X_test)
 
         history_filepath = part_b_logs_dir / f'model-part-b-{"_".join([str(i) for i in model.n_neurons])}' \
                                              f'alpha_{alpha}-momentum={momentum}-history'
-        predictions_filepath = part_b_logs_dir / f'model-part-b-{"_".join([str(i) for i in model.n_neurons])}' \
-                                                 f'alpha_{alpha}-momentum={momentum}-test_predictions'
+        train_predictions_filepath = part_b_logs_dir / f'model-part-b-{"_".join([str(i) for i in model.n_neurons])}' \
+                                                       f'alpha_{alpha}-momentum={momentum}-train_predictions'
+        test_predictions_filepath = part_b_logs_dir / f'model-part-b-{"_".join([str(i) for i in model.n_neurons])}' \
+                                                      f'alpha_{alpha}-momentum={momentum}-test_predictions'
 
         with open(history_filepath, 'w') as f:
             json.dump(history, f)
 
-        with open(predictions_filepath, 'wb') as f:
-            np.save(f, preds)
+        with open(train_predictions_filepath, 'wb') as f:
+            np.save(f, train_preds)
+
+        with open(test_predictions_filepath, 'wb') as f:
+            np.save(f, test_preds)
 
 
-def main_part_c(X_train, y_train, X_valid, y_valid, X_test, y_test):
+def q3_main_part_c(X_train, y_train, X_valid, y_valid, X_test, y_test):
     part_c_logs_dir = RNN_LOGS_DIR / 'gru'
+    part_c_logs_dir.mkdir(exist_ok=True)
 
-    alphas = [0.01, 0.05, 0.1]
+    alphas = [0.01, 0.04, 0.08, 0.12]
     momentums = [0.85, 0.95]
     n_neurons_list = [[128, 128, 64, 6],
                       [128, 64, 32, 6],
@@ -990,25 +1007,166 @@ def main_part_c(X_train, y_train, X_valid, y_valid, X_test, y_test):
                       [32, 32, 6]]
 
     for alpha, momentum, n_neurons in product(alphas, momentums, n_neurons_list):
-        model = LSTM(recurrent_units=128, n_neurons=n_neurons)
+        model = GRU(recurrent_units=128, n_neurons=n_neurons)
         history = model.fit(X_train, y_train, X_valid, y_valid, alpha=alpha, momentum=momentum, tolerance=5)
 
-        preds = model(X_test)
+        train_preds = model(X_train)
+        test_preds = model(X_test)
 
         history_filepath = part_c_logs_dir / f'model-part-c-{"_".join([str(i) for i in model.n_neurons])}' \
                                              f'alpha_{alpha}-momentum={momentum}-history'
-        predictions_filepath = part_c_logs_dir / f'model-part-c-{"_".join([str(i) for i in model.n_neurons])}' \
-                                                 f'alpha_{alpha}-momentum={momentum}-test_predictions'
+        train_predictions_filepath = part_c_logs_dir / f'model-part-c-{"_".join([str(i) for i in model.n_neurons])}' \
+                                                       f'alpha_{alpha}-momentum={momentum}-train_predictions'
+        test_predictions_filepath = part_c_logs_dir / f'model-part-c-{"_".join([str(i) for i in model.n_neurons])}' \
+                                                      f'alpha_{alpha}-momentum={momentum}-test_predictions'
 
         with open(history_filepath, 'w') as f:
             json.dump(history, f)
 
-        with open(predictions_filepath, 'wb') as f:
-            np.save(f, preds)
+        with open(train_predictions_filepath, 'wb') as f:
+            np.save(f, train_preds)
+
+        with open(test_predictions_filepath, 'wb') as f:
+            np.save(f, test_preds)
+
+
+def load_history(filepath):
+    with open(filepath, 'r') as file:
+        history = json.load(file)
+    return history
+
+def load_predictions(filepath):
+    return np.load(filepath)
 
 
 if __name__ == '__main__':
-    X_train, y_train, X_valid, y_valid, X_test, y_test = load_and_preprocess_data()
-    # main_part_a(X_train, y_train, X_valid, y_valid, X_test, y_test)
-    main_part_b(X_train, y_train, X_valid, y_valid, X_test, y_test)
-    main_part_c(X_train, y_train, X_valid, y_valid, X_test, y_test)
+    X_train, y_train, X_valid, y_valid, X_test, y_test = load_and_preprocess_data_q3()
+    q3_main_part_a(X_train, y_train, X_valid, y_valid, X_test, y_test)
+    q3_main_part_b(X_train, y_train, X_valid, y_valid, X_test, y_test)
+    q3_main_part_c(X_train, y_train, X_valid, y_valid, X_test, y_test)
+
+    alphas = [0.01, 0.04, 0.08, 0.12]
+    momentums = [0.85, 0.95]
+    n_neurons_list = [[128, 128, 64, 6],
+                      [128, 64, 32, 6],
+                      [64, 64, 32, 6],
+                      [32, 32, 6]]
+    hyperparameters = list(product(alphas, momentums, n_neurons_list))
+    part_a_histories = [
+        load_history(RNN_LOGS_DIR / 'simple' / f'model-part-a-{"_".join([str(i) for i in n_neurons])}' \
+                                               f'alpha_{alpha}-momentum={momentum}-history')
+        for alpha, momentum, n_neurons in hyperparameters
+    ]
+    part_b_histories = [
+        load_history(RNN_LOGS_DIR / 'lstm' / f'model-part-b-{"_".join([str(i) for i in n_neurons])}' \
+                                             f'alpha_{alpha}-momentum={momentum}-history')
+        for alpha, momentum, n_neurons in hyperparameters
+    ]
+    part_c_histories = [
+        load_history(RNN_LOGS_DIR / 'gru' / f'model-part-c-{"_".join([str(i) for i in n_neurons])}' \
+                                            f'alpha_{alpha}-momentum={momentum}-history')
+        for alpha, momentum, n_neurons in hyperparameters
+    ]
+    part_a_valid_accuracies = [history['valid_accuracy'][-1] for history in part_a_histories]
+    part_b_valid_accuracies = [history['valid_accuracy'][-1] for history in part_b_histories]
+    part_c_valid_accuracies = [history['valid_accuracy'][-1] for history in part_c_histories]
+
+    part_a_best_index = np.argmax(part_a_valid_accuracies)
+    part_b_best_index = np.argmax(part_b_valid_accuracies)
+    part_c_best_index = np.argmax(part_c_valid_accuracies)
+
+    part_a_best_params = hyperparameters[part_a_best_index]
+    part_b_best_params = hyperparameters[part_b_best_index]
+    part_c_best_params = hyperparameters[part_c_best_index]
+
+    part_a_best_history = part_a_histories[part_a_best_index]
+    part_b_best_history = part_b_histories[part_b_best_index]
+    part_c_best_history = part_c_histories[part_c_best_index]
+
+    alpha, momentum, n_neurons = part_a_best_params
+    part_a_train_preds = load_predictions(
+        RNN_LOGS_DIR / 'simple' / f'model-part-a-{"_".join([str(i) for i in n_neurons])}'\
+                                  f'alpha_{alpha}-momentum={momentum}-train_predictions'
+    )
+
+    alpha, momentum, n_neurons = part_b_best_params
+    part_b_train_preds = load_predictions(
+        RNN_LOGS_DIR / 'lstm' / f'model-part-b-{"_".join([str(i) for i in n_neurons])}'\
+                                  f'alpha_{alpha}-momentum={momentum}-train_predictions'
+    )
+
+    alpha, momentum, n_neurons = part_c_best_params
+    part_c_train_preds = load_predictions(
+        RNN_LOGS_DIR / 'gru' / f'model-part-c-{"_".join([str(i) for i in n_neurons])}'\
+                               f'alpha_{alpha}-momentum={momentum}-train_predictions'
+    )
+
+    alpha, momentum, n_neurons = part_a_best_params
+    part_a_test_preds = load_predictions(
+        RNN_LOGS_DIR / 'simple' / f'model-part-a-{"_".join([str(i) for i in n_neurons])}'\
+                                  f'alpha_{alpha}-momentum={momentum}-test_predictions'
+    )
+
+    alpha, momentum, n_neurons = part_b_best_params
+    part_b_test_preds = load_predictions(
+        RNN_LOGS_DIR / 'lstm' / f'model-part-b-{"_".join([str(i) for i in n_neurons])}'\
+                                f'alpha_{alpha}-momentum={momentum}-test_predictions'
+    )
+
+    alpha, momentum, n_neurons = part_c_best_params
+    part_c_test_preds = load_predictions(
+        RNN_LOGS_DIR / 'gru' / f'model-part-c-{"_".join([str(i) for i in n_neurons])}'\
+                               f'alpha_{alpha}-momentum={momentum}-test_predictions'
+    )
+
+    index = ['downstairs', 'jogging', 'sitting', 'standing', 'upstairs', 'walking']
+    histories = [part_a_best_history, part_b_best_history, part_c_best_history]
+    all_best_params = [part_a_best_params, part_b_best_params, part_c_best_params]
+    all_train_preds = [part_a_train_preds, part_b_train_preds, part_c_train_preds]
+    all_test_preds = [part_a_test_preds, part_b_test_preds, part_c_test_preds]
+    metrics_set = [['train_cross_entropy', 'valid_cross_entropy'], ['train_accuracy', 'valid_accuracy']]
+    names = ['simple', 'lstm', 'gru']
+
+    for i, (name, params, train_preds, test_preds, history) in enumerate(zip(names, all_best_params, all_train_preds, all_test_preds, histories)):
+        sns.set(font_scale=1.4)
+        alpha, momentum, n_neurons = params
+        train_cm = np.zeros((6, 6))
+        for pred, true in zip(train_preds, y_train):
+            p = pred.argmax()
+            t = true.argmax()
+            train_cm[p][t] += 1
+        train_cm /= len(y_train)
+        train_cm = pd.DataFrame(train_cm, index=index, columns=index)
+
+        plt.figure(figsize=(12, 10))
+        sns.heatmap(train_cm, annot=True)
+        plt.xlabel('True Label')
+        plt.ylabel('Predicted Label')
+        plt.savefig(RNN_LOGS_DIR / name / f'train_cm-alpha={alpha}-momentum={momentum}-n_neurons={"_".join([str(x) for x in n_neurons])}.png')
+
+        test_cm = np.zeros((6, 6))
+        test_acc = 0
+        for pred, true in zip(test_preds, y_test):
+            p = pred.argmax()
+            t = true.argmax()
+            test_cm[p][t] += 1
+            test_acc += int(p == t)
+        test_cm /= len(y_test)
+        test_cm = pd.DataFrame(test_cm, index=index, columns=index)
+        test_acc /= len(y_test)
+        plt.figure(figsize=(12, 10))
+        sns.heatmap(test_cm, annot=True)
+        plt.xlabel('True Label')
+        plt.ylabel('Predicted Label')
+        plt.savefig(RNN_LOGS_DIR / name / f'test_cm-test-acc-{test_acc}.png')
+
+        for j, metrics in enumerate(metrics_set):
+            plt.figure()
+            plt.title(f"{'Cross Entropy' if j == 0 else 'Accuracy'} vs Epochs")
+            plt.xlabel('Epochs')
+            plt.ylabel(f"{'Cross Entropy' if j == 0 else 'Accuracy'}")
+            for metric in metrics:
+                history = histories[i]
+                plt.plot(history[metric], label='Validation' if 'valid' in metric else 'Training')
+            plt.legend()
+            plt.savefig(RNN_LOGS_DIR / name / f'{name}-{"cross_entropy" if j == 0 else "accuracy"}.png')

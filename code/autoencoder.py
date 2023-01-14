@@ -7,6 +7,8 @@ from pathlib import Path
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
 
 
 # IMPORTANT: Please change this according to your own local paths to run the code
@@ -15,6 +17,9 @@ DATA_DIR = PROJECT_ROOT_DIR / 'data'                       # The directory that 
 LOGS_DIR = PROJECT_ROOT_DIR / 'logs'                       # The directory that contains the logs
 AUTOENCODER_DATA_PATH = DATA_DIR / 'data1.h5'              # The filepath to the dataset for q1
 AUTOENCODER_LOGS_DIR = LOGS_DIR / 'autoencoder'             # The directory to which the logs will be saved for q1
+
+LOGS_DIR.mkdir(exist_ok=True)
+AUTOENCODER_LOGS_DIR.mkdir(exist_ok=True)
 
 
 # Weights and Gradients containers for readability
@@ -179,14 +184,14 @@ def display_images(rgb, gray, n, n_cols, save_rgb_filepath, save_gray_filepath):
     gray_fig.savefig(save_gray_filepath)
 
 
-def main_part_a(images, X):
+def q1_main_part_a(images, X):
     rgb_filepath = AUTOENCODER_LOGS_DIR / 'rgb_images.png'
     gray_filepath = AUTOENCODER_LOGS_DIR / 'gray_images.png'
 
     display_images(images, X, n=200, n_cols=8, save_rgb_filepath=rgb_filepath, save_gray_filepath=gray_filepath)
 
 
-def main_part_b(X):
+def q1_main_part_b(X):
     betas = [0.05, 0.1, 0.2]
     rhos = [0.05, 0.1, 0.5]
     for beta, rho in product(betas, rhos):
@@ -197,7 +202,7 @@ def main_part_b(X):
         model.plot_hidden_activations(path=path)
 
 
-def main_part_d(X):
+def q1_main_part_d(X):
     beta = 0.2
     rho = 0.05
     Lhids = [32, 64, 96]
@@ -213,6 +218,6 @@ def main_part_d(X):
 
 if __name__ == '__main__':
     images, X = load_and_preprocess_images()
-    main_part_a(images, X)
-    main_part_b(X)
-    main_part_d(X)
+    q1_main_part_a(images, X)
+    q1_main_part_b(X)
+    q1_main_part_d(X)

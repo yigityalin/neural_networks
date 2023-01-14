@@ -7,6 +7,7 @@ import json
 
 from tqdm import tqdm
 import h5py
+import matplotlib.pyplot as plt
 import numpy as np
 
 # IMPORTANT: Please change this according to your own local paths to run the code
@@ -15,6 +16,9 @@ DATA_DIR = PROJECT_ROOT_DIR / 'data'  # The directory that contains the data
 LOGS_DIR = PROJECT_ROOT_DIR / 'logs'  # The directory that contains the logs
 EMBEDDING_DATA_PATH = DATA_DIR / 'data2.h5'  # The filepath to the dataset for q1
 EMBEDDING_LOGS_DIR = LOGS_DIR / 'embedding'  # The directory to which the logs will be saved for q1
+
+LOGS_DIR.mkdir(exist_ok=True)
+EMBEDDING_LOGS_DIR.mkdir(exist_ok=True)
 
 
 # Weights and Gradients containers for readability
@@ -219,7 +223,17 @@ class EmbeddingNN:
         self.weights = Weights(*[w - alpha * delta for w, delta in zip(self.weights, delta_weights)])
 
 
-if __name__ == '__main__':
+def load_history(filepath):
+    with open(filepath, 'r') as file:
+        history = json.load(file)
+    return history
+
+
+def load_test_predictions(filepath):
+    return np.load(filepath)
+
+
+def q2_main():
     X_train, y_train, X_valid, y_valid, X_test, y_test, words = load_and_preprocess_data()
 
     D_P_values = [(8, 64), (16, 128), (32, 256)]
@@ -231,8 +245,28 @@ if __name__ == '__main__':
         history_filepath = EMBEDDING_LOGS_DIR / f'model-D={D}-P={P}-history'
         predictions_filepath = EMBEDDING_LOGS_DIR / f'model-D={D}-P={P}-test_predictions'
 
+        # history is saved to plot the accuracy and cross entropy vs epoch plots
         with open(history_filepath, 'w') as f:
             json.dump(history, f)
 
+        # test predictions is saved for the answer of part b
         with open(predictions_filepath, 'wb') as f:
             np.save(f, preds)
+
+    metrics = ['train_cross_entropy', 'valid_cross_entropy', 'train_accuracy', 'valid_accuracy']
+    histories = [load_history(EMBEDDING_LOGS_DIR / f'model-D={D}-P={P}-history') for D, P in D_P_values]
+
+    for metric in metrics:
+        plt.figure()
+        plt.title(f"{' '.join(metric.split('_')).replace('valid', 'validation').title()} vs Epochs")
+        plt.xlabel('Epochs')
+        plt.ylabel(' '.join(metric.split('_')).replace('valid', 'validation').title())
+        for i, (D, P) in enumerate(D_P_values):
+            history = histories[i]
+            plt.plot(history[metric], label=f'(D, P) = ({D}, {P})')
+        plt.legend()
+        plt.savefig(EMBEDDING_LOGS_DIR / f'{metric}_comparison.png')
+
+
+if __name__ == '__main__':
+    q2_main()
